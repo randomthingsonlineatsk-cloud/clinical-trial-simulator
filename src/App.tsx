@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { submitEntry, topEntries } from '@/lib/local-leaderboard'
+import IndStep, { type IndSummary } from './application/IndStep'
+import IndMissions from './application/IndMissions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -85,7 +87,7 @@ function GradeRow({ grade }: { grade: Grade }) {
 // ---------------------------------------------------------------------------
 
 function phaseNumberOf(step: Step): number {
-  if (step === 'brief' || step === 'p1' || step === 'p1r') return 1
+  if (step === 'brief' || step === 'p1' || step === 'ind' || step === 'p1r') return 1
   if (step === 'p2' || step === 'p2r' || step === 'meeting') return 2
   if (step === 'p3' || step === 'p3r') return 3
   if (step === 'phaseIV') return 4
@@ -653,7 +655,7 @@ function GlossaryTab() {
 // Play tab — the main simulation flow
 // ---------------------------------------------------------------------------
 
-type Step = 'select' | 'brief' | 'p1' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
+type Step = 'select' | 'brief' | 'p1' | 'ind' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
 type Difficulty = 'guided' | 'expert'
 type PlayMode = 'curated' | 'endless' | 'custom'
 
@@ -785,6 +787,8 @@ function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra }: {
 function PlayTab() {
   const [mode, setMode] = useState<PlayMode>('curated')
   const [difficulty, setDifficulty] = useState<Difficulty>('guided')
+  const [indGate, setIndGate] = useState(true)
+  const [indSummary, setIndSummary] = useState<IndSummary | null>(null)
   const [authorityKey, setAuthorityKey] = useState('FDA')
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [step, setStep] = useState<Step>('select')
@@ -835,7 +839,7 @@ function PlayTab() {
 
   function pickScenario(s: Scenario) {
     setScenario(s); setStep('brief'); setChoices({}); setP1(null); setP2(null); setP3(null); setGrades([]); setReport(null)
-    setMeetingTaken(false); setMeetingFeedback(null); setRedesignCount(0); setUseAccelerated(false); setPhaseIvOutcomeNote(null); setScoreSubmitted(false)
+    setMeetingTaken(false); setMeetingFeedback(null); setRedesignCount(0); setUseAccelerated(false); setPhaseIvOutcomeNote(null); setScoreSubmitted(false); setIndSummary(null)
   }
   function pickCurated(id: string) { const s = getScenario(id); if (s) pickScenario(s) }
   function pickGenerated() { pickScenario(generateScenario()) }
@@ -849,7 +853,17 @@ function PlayTab() {
     if (!scenario) return
     const g = gradePhase(scenario, 'p1', choices)
     setGrades((prev) => [...prev.filter((x) => x.phase !== 'p1'), ...g])
+    if (indGate) { setStep('ind'); return }
     setP1(runPhase1(scenario, choices, seed))
+    setStep('p1r')
+  }
+  // After the IND: changes made to answer FDA apply to the protocol that is run; the original
+  // choices stay graded.
+  function afterInd(corrected: Choices, summary: IndSummary) {
+    if (!scenario) return
+    const next = { ...choices, ...corrected }
+    setChoices(next); setIndSummary(summary)
+    setP1(runPhase1(scenario, next, seed))
     setStep('p1r')
   }
   function submitP2() {
@@ -924,6 +938,7 @@ function PlayTab() {
     if (report.strengths.length) { lines.push('Strengths:'); report.strengths.forEach((d) => lines.push(`  - ${d}`)); lines.push('') }
     lines.push('Decisions:')
     report.grades.forEach((g) => { lines.push(`  [${g.phase.toUpperCase()}] ${g.title}: ${g.chosenLabel} — ${g.verdict} (${g.points}/${g.maxPoints})`); lines.push(`    ${g.explanation}`) })
+    if (indSummary) { lines.push(''); lines.push('US IND:'); lines.push(`  Study could proceed on day ${indSummary.proceedDay}; first patient in on day ${indSummary.firstPatientDay}; clinical hold cycles: ${indSummary.holdCycles}; information requests: ${indSummary.requests}.`); indSummary.findings.forEach((f) => lines.push(`  - ${f}`)) }
     if (phaseIvOutcomeNote) { lines.push(''); lines.push('Phase IV outcome:'); lines.push(`  ${phaseIvOutcomeNote}`) }
     lines.push('')
     lines.push('All drugs, vaccines, and scenarios are entirely fictional, for educational use only.')
@@ -977,6 +992,14 @@ function PlayTab() {
             <p className="text-xs text-lab-text-muted mt-1.5">{getRegulator(authorityKey).note}</p>
           </div>
         )}
+
+        <div>
+          <p className="text-xs font-mono text-lab-text-muted mb-1.5">Regulatory gate before first patient in</p>
+          <div className="flex gap-2">
+            <Button onClick={() => setIndGate(true)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${indGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>US IND before Phase I</Button>
+            <Button onClick={() => setIndGate(false)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${!indGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
+          </div>
+        </div>
 
         {mode !== 'custom' && (
           <div>
@@ -1075,10 +1098,24 @@ function PlayTab() {
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel="Lock protocol and run Phase I" onBack={() => setStep('brief')} backLabel="Back to program brief" />
+      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel={indGate ? 'Lock protocol and prepare the IND' : 'Lock protocol and run Phase I'} onBack={() => setStep('brief')} backLabel="Back to program brief" />
     </div>
   )
-  if (step === 'p1r' && p1) return <div className="space-y-4">{progressBar}<PhaseResultView outcome={p1} flows={flows} grades={grades.filter((g) => g.phase === 'p1')} onNext={() => setStep('p2')} nextLabel="Design Phase II" /></div>
+  if (step === 'ind') return (
+    <div className="space-y-4">
+      {progressBar}
+      {abandonControl}
+      <IndStep scenario={scenario} choices={choices} onBack={() => setStep('p1')} onDone={afterInd} />
+    </div>
+  )
+  if (step === 'p1r' && p1) return <div className="space-y-4">{progressBar}<PhaseResultView outcome={p1} flows={flows} grades={grades.filter((g) => g.phase === 'p1')} onNext={() => setStep('p2')} nextLabel="Design Phase II" extra={indSummary ? (
+    <Card className={`bg-lab-panel/80 border-2 ${indSummary.holdCycles ? 'border-lab-red' : 'border-lab-emerald'}`}>
+      <CardContent className="pt-4 space-y-1">
+        <p className="font-mono text-sm text-lab-text">US IND: the study could proceed on day {indSummary.proceedDay}; first patient in on day {indSummary.firstPatientDay}.</p>
+        <p className="text-xs text-lab-text-muted">{indSummary.holdCycles ? `${indSummary.holdCycles} clinical hold cycle${indSummary.holdCycles > 1 ? 's' : ''} cost ${indSummary.proceedDay - 30} days.` : 'No clinical hold.'}{indSummary.requests ? ` ${indSummary.requests} information request${indSummary.requests > 1 ? 's' : ''}.` : ''}{indSummary.corrected.length ? ` Protocol changed to answer FDA: ${indSummary.corrected.join(', ')}.` : ''}</p>
+      </CardContent>
+    </Card>
+  ) : undefined} /></div>
   if (step === 'p2') return (
     <div className="space-y-4">
       {progressBar}
@@ -1266,7 +1303,7 @@ function PlayTab() {
 // App
 // ---------------------------------------------------------------------------
 
-type Tab = 'play' | 'assessment' | 'glossary' | 'leaderboard' | 'history'
+type Tab = 'play' | 'ind' | 'assessment' | 'glossary' | 'leaderboard' | 'history'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('play')
@@ -1288,6 +1325,7 @@ export default function App() {
 
         <div className="flex flex-wrap gap-2">
           <TabButton active={tab === 'play'} onClick={() => setTab('play')} icon={FlaskConical}>Play</TabButton>
+          <TabButton active={tab === 'ind'} onClick={() => setTab('ind')} icon={ShieldCheck}>IND missions</TabButton>
           <TabButton active={tab === 'assessment'} onClick={() => setTab('assessment')} icon={ClipboardCheck}>Assessment</TabButton>
           <TabButton active={tab === 'glossary'} onClick={() => setTab('glossary')} icon={BookOpen}>Glossary</TabButton>
           <TabButton active={tab === 'leaderboard'} onClick={() => setTab('leaderboard')} icon={Trophy}>Leaderboard</TabButton>
@@ -1295,6 +1333,7 @@ export default function App() {
         </div>
 
         {tab === 'play' && <PlayTab />}
+        {tab === 'ind' && <IndMissions />}
         {tab === 'assessment' && <AssessmentTab />}
         {tab === 'glossary' && <GlossaryTab />}
         {tab === 'leaderboard' && <LeaderboardTab />}
