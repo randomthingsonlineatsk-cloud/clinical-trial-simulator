@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { submitEntry, topEntries } from '@/lib/local-leaderboard'
 import IndStep, { type IndSummary } from './application/IndStep'
 import IndMissions from './application/IndMissions'
+import EuStep, { StartupTimeline, indRow, type EuSummary } from './application/EuStep'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -87,7 +88,7 @@ function GradeRow({ grade }: { grade: Grade }) {
 // ---------------------------------------------------------------------------
 
 function phaseNumberOf(step: Step): number {
-  if (step === 'brief' || step === 'p1' || step === 'ind' || step === 'p1r') return 1
+  if (step === 'brief' || step === 'p1' || step === 'ind' || step === 'eu' || step === 'p1r') return 1
   if (step === 'p2' || step === 'p2r' || step === 'meeting') return 2
   if (step === 'p3' || step === 'p3r') return 3
   if (step === 'phaseIV') return 4
@@ -655,7 +656,7 @@ function GlossaryTab() {
 // Play tab — the main simulation flow
 // ---------------------------------------------------------------------------
 
-type Step = 'select' | 'brief' | 'p1' | 'ind' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
+type Step = 'select' | 'brief' | 'p1' | 'ind' | 'eu' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
 type Difficulty = 'guided' | 'expert'
 type PlayMode = 'curated' | 'endless' | 'custom'
 
@@ -749,7 +750,7 @@ function DecisionForm({ scenario, phase, choices, setChoices, difficulty, onSubm
   )
 }
 
-function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra }: { outcome: PhaseOutcome; flows: PhaseOutcome['flow'][]; grades: Grade[]; onNext: () => void; nextLabel: string; extra?: React.ReactNode }) {
+function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra, extraAfter }: { outcome: PhaseOutcome; flows: PhaseOutcome['flow'][]; grades: Grade[]; onNext: () => void; nextLabel: string; extra?: React.ReactNode; extraAfter?: React.ReactNode }) {
   const tone = outcome.status === 'success' ? { border: 'border-lab-emerald', glow: 'glow-emerald', Icon: CheckCircle2, color: 'text-lab-emerald' }
     : outcome.status === 'mixed' ? { border: 'border-lab-gold', glow: 'glow-gold', Icon: CircleAlert, color: 'text-lab-gold' }
     : { border: 'border-lab-red', glow: 'glow-red', Icon: CircleSlash, color: 'text-lab-red' }
@@ -778,6 +779,7 @@ function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra }: {
         {grades.map((g) => <GradeRow key={g.decisionId} grade={g} />)}
       </div>
       {extra}
+      {extraAfter}
       <p className="text-center text-[10px] font-mono text-lab-text-muted">This phase is locked in — like a real trial, results can't be undone, only built on.</p>
       <Button onClick={onNext} className="w-full bg-lab-gold text-lab-bg hover:bg-lab-gold/90 font-mono gap-1.5">{nextLabel} <ArrowRight className="size-4" /></Button>
     </div>
@@ -787,8 +789,11 @@ function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra }: {
 function PlayTab() {
   const [mode, setMode] = useState<PlayMode>('curated')
   const [difficulty, setDifficulty] = useState<Difficulty>('guided')
-  const [indGate, setIndGate] = useState(true)
+  const [appRegions, setAppRegions] = useState<'us' | 'eu' | 'both' | 'none'>('us')
+  const indGate = appRegions === 'us' || appRegions === 'both'
+  const euGate = appRegions === 'eu' || appRegions === 'both'
   const [indSummary, setIndSummary] = useState<IndSummary | null>(null)
+  const [euSummary, setEuSummary] = useState<EuSummary | null>(null)
   const [authorityKey, setAuthorityKey] = useState('FDA')
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [step, setStep] = useState<Step>('select')
@@ -853,7 +858,9 @@ function PlayTab() {
     if (!scenario) return
     const g = gradePhase(scenario, 'p1', choices)
     setGrades((prev) => [...prev.filter((x) => x.phase !== 'p1'), ...g])
+    setIndSummary(null); setEuSummary(null)
     if (indGate) { setStep('ind'); return }
+    if (euGate) { setStep('eu'); return }
     setP1(runPhase1(scenario, choices, seed))
     setStep('p1r')
   }
@@ -863,6 +870,15 @@ function PlayTab() {
     if (!scenario) return
     const next = { ...choices, ...corrected }
     setChoices(next); setIndSummary(summary)
+    if (euGate) { setStep('eu'); return }
+    setP1(runPhase1(scenario, next, seed))
+    setStep('p1r')
+  }
+  // After the EU application: answers to the reviewers' questions change the protocol that is run.
+  function afterEu(corrected: Choices, summary: EuSummary) {
+    if (!scenario) return
+    const next = { ...choices, ...corrected }
+    setChoices(next); setEuSummary(summary)
     setP1(runPhase1(scenario, next, seed))
     setStep('p1r')
   }
@@ -939,6 +955,7 @@ function PlayTab() {
     lines.push('Decisions:')
     report.grades.forEach((g) => { lines.push(`  [${g.phase.toUpperCase()}] ${g.title}: ${g.chosenLabel} — ${g.verdict} (${g.points}/${g.maxPoints})`); lines.push(`    ${g.explanation}`) })
     if (indSummary) { lines.push(''); lines.push('US IND:'); lines.push(`  Study could proceed on day ${indSummary.proceedDay}; first patient in on day ${indSummary.firstPatientDay}; clinical hold cycles: ${indSummary.holdCycles}; information requests: ${indSummary.requests}.`); indSummary.findings.forEach((f) => lines.push(`  - ${f}`)) }
+    if (euSummary) { lines.push(''); lines.push('EU clinical trial application (Regulation (EU) No 536/2014):'); euSummary.countries.forEach((c) => lines.push(`  ${c.name}: ${c.status}${c.status === 'authorised' ? ` on day ${c.decisionDay}, first subject day ${c.firstPatientDay}` : ''}`)); lines.push(`  Reviewer questions: ${euSummary.rfis}; refusals: ${euSummary.refusals}; transparency category ${euSummary.category}.`) }
     if (phaseIvOutcomeNote) { lines.push(''); lines.push('Phase IV outcome:'); lines.push(`  ${phaseIvOutcomeNote}`) }
     lines.push('')
     lines.push('All drugs, vaccines, and scenarios are entirely fictional, for educational use only.')
@@ -994,10 +1011,11 @@ function PlayTab() {
         )}
 
         <div>
-          <p className="text-xs font-mono text-lab-text-muted mb-1.5">Regulatory gate before first patient in</p>
-          <div className="flex gap-2">
-            <Button onClick={() => setIndGate(true)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${indGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>US IND before Phase I</Button>
-            <Button onClick={() => setIndGate(false)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${!indGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
+          <p className="text-xs font-mono text-lab-text-muted mb-1.5">Trial application before first patient in</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {([['us', 'US IND'], ['eu', 'EU (CTIS)'], ['both', 'US and EU'], ['none', 'Skip (classic game)']] as const).map(([k, l]) => (
+              <Button key={k} onClick={() => setAppRegions(k)} variant="outline" size="sm" className={`border-2 font-mono ${appRegions === k ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>{l}</Button>
+            ))}
           </div>
         </div>
 
@@ -1098,14 +1116,21 @@ function PlayTab() {
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel={indGate ? 'Lock protocol and prepare the IND' : 'Lock protocol and run Phase I'} onBack={() => setStep('brief')} backLabel="Back to program brief" />
+      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel={indGate ? 'Lock protocol and prepare the IND' : euGate ? 'Lock protocol and prepare the EU application' : 'Lock protocol and run Phase I'} onBack={() => setStep('brief')} backLabel="Back to program brief" />
     </div>
   )
   if (step === 'ind') return (
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <IndStep scenario={scenario} choices={choices} onBack={() => setStep('p1')} onDone={afterInd} />
+      <IndStep scenario={scenario} choices={choices} onBack={() => setStep('p1')} onDone={afterInd} doneLabel={euGate ? 'Go to the EU application' : undefined} />
+    </div>
+  )
+  if (step === 'eu') return (
+    <div className="space-y-4">
+      {progressBar}
+      {abandonControl}
+      <EuStep scenario={scenario} choices={choices} onBack={() => setStep(indGate ? 'ind' : 'p1')} onDone={afterEu} extraRows={indSummary ? [indRow(indSummary)] : []} />
     </div>
   )
   if (step === 'p1r' && p1) return <div className="space-y-4">{progressBar}<PhaseResultView outcome={p1} flows={flows} grades={grades.filter((g) => g.phase === 'p1')} onNext={() => setStep('p2')} nextLabel="Design Phase II" extra={indSummary ? (
@@ -1115,6 +1140,16 @@ function PlayTab() {
         <p className="text-xs text-lab-text-muted">{indSummary.holdCycles ? `${indSummary.holdCycles} clinical hold cycle${indSummary.holdCycles > 1 ? 's' : ''} cost ${indSummary.proceedDay - 30} days.` : 'No clinical hold.'}{indSummary.requests ? ` ${indSummary.requests} information request${indSummary.requests > 1 ? 's' : ''}.` : ''}{indSummary.corrected.length ? ` Protocol changed to answer FDA: ${indSummary.corrected.join(', ')}.` : ''}</p>
       </CardContent>
     </Card>
+  ) : undefined} extraAfter={euSummary ? (
+    <div className="space-y-3">
+      <Card className={`bg-lab-panel/80 border-2 ${euSummary.refusals ? 'border-lab-red' : 'border-lab-emerald'}`}>
+        <CardContent className="pt-4 space-y-1">
+          <p className="font-mono text-sm text-lab-text">EU (CTR, CTIS): {euSummary.countries.map((c) => `${c.name} ${c.status === 'authorised' ? `day ${c.decisionDay}` : c.status}`).join(' · ')}; first subject in on day {euSummary.firstPatientDay}.</p>
+          <p className="text-xs text-lab-text-muted">{euSummary.rfis ? `${euSummary.rfis} reviewer question${euSummary.rfis > 1 ? 's' : ''}.` : 'No reviewer questions.'}{euSummary.refusals ? ` ${euSummary.refusals} refusal${euSummary.refusals > 1 ? 's' : ''}.` : ''} Transparency category {euSummary.category}{euSummary.categoryOk ? '' : ' (a phase I trial is category 1)'}.{euSummary.corrected.length ? ` Protocol changed to answer the reviewers: ${euSummary.corrected.join(', ')}.` : ''}</p>
+        </CardContent>
+      </Card>
+      <StartupTimeline rows={[...(indSummary ? [indRow(indSummary)] : []), ...euSummary.rows]} />
+    </div>
   ) : undefined} /></div>
   if (step === 'p2') return (
     <div className="space-y-4">
@@ -1325,7 +1360,7 @@ export default function App() {
 
         <div className="flex flex-wrap gap-2">
           <TabButton active={tab === 'play'} onClick={() => setTab('play')} icon={FlaskConical}>Play</TabButton>
-          <TabButton active={tab === 'ind'} onClick={() => setTab('ind')} icon={ShieldCheck}>IND missions</TabButton>
+          <TabButton active={tab === 'ind'} onClick={() => setTab('ind')} icon={ShieldCheck}>Application missions</TabButton>
           <TabButton active={tab === 'assessment'} onClick={() => setTab('assessment')} icon={ClipboardCheck}>Assessment</TabButton>
           <TabButton active={tab === 'glossary'} onClick={() => setTab('glossary')} icon={BookOpen}>Glossary</TabButton>
           <TabButton active={tab === 'leaderboard'} onClick={() => setTab('leaderboard')} icon={Trophy}>Leaderboard</TabButton>

@@ -20,15 +20,23 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 - A simulated FDA review over the 30-day wait (312.40(b)): information requests, or a clinical hold on the grounds of 312.42(b)(1). Answer the hold with a complete response; FDA replies within 30 days. The timeline shows the day the study may proceed and the first patient in.
 - Reviewer questions are plain "simulated" cards, not agency letters.
 - Download the IND as an eCTD package and import it in the [eCTD Dossier Builder](https://randomthingsonlineatsk-cloud.github.io/ectd-dossier-builder/) (Sequences tab), which places each document in its US Module 1, 2 or 5 node.
-- Four IND missions: open an IND without a hold, clear a hold in one cycle, IND or exempt (312.2(b)), and file the IND in eCTD.
-- The setup screen can skip the IND for the classic game.
+- Four US IND missions: open an IND without a hold, clear a hold in one cycle, IND or exempt (312.2(b)), and file the IND in eCTD.
+- The setup screen chooses the applications before Phase I: US IND, EU (CTIS), both, or none (the classic game).
+
+### Clinical trial application: EU CTR and CTIS (Phase 2)
+- One application under Regulation (EU) No 536/2014 for the member states you choose, with a proposed reporting member state. Part I (Annex I, B to J): cover letter, application form, protocol, investigator's brochure, GMP documentation, IMPD and labelling. Part II per country (Annex I, K to R): recruitment, consent in the national language, investigator and site suitability, insurance under national law (Article 76), payments, fee and data protection.
+- The real clock, day by day: validation in 10 days (plus 10 + 5 with a request), assessment in 45 days (26 + 12 + 7), up to 31 more days for a request for information with 12 days to answer, 50 more for advanced therapies, and the decision within 5 days. About 60 days without questions, up to 106 with them.
+- Reviewer questions (simulated) come from weaknesses in the Phase I design and the dossier. A bad answer at validation makes the application lapse; an unresolved Part I point means every member state refuses; an unresolved Part II point means one country refuses while the others start. Resubmission adds its own clock.
+- A start-up timeline per country (and for the US IND), the 2024 CTIS transparency categories and what becomes public when, and a Watch toggle with the proposed European Biotech Act clock (not adopted; off by default).
+- The EU dossier exports as a checklist: CTIS is not eCTD.
+- Three EU missions: a three-country start-up, Part I or Part II, and the CTR clock and transparency.
 
 ## Roadmap
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Move from Macaly to GitHub Pages, no sign-in | Done |
 | 1 | US IND step, clinical holds, eCTD export, IND missions | Done |
-| 2 | EU CTR and CTIS (Part I and Part II, RFIs, timelines) | Planned |
+| 2 | EU CTR and CTIS: Part I and Part II, the CTR clock, refusals and resubmission, transparency, multi-country timeline, 3 missions | Done |
 | 3 | India NDCT Rules 2019 (CT-04/CT-06, SEC review) | Planned |
 | 4 | Ethics, consent, insurance and registries; amendments and timeline comparison | Planned |
 
