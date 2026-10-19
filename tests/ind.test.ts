@@ -4,12 +4,8 @@ import { SCENARIOS, getScenario } from '../src/data/ct-scenarios'
 import { reviewInd, runReview, canSubmit, indPackage, IND_PARTS, EMPTY_FORM, COMMITMENTS, IB_SECTIONS, IND_PKG_KIND, type IndForm } from '../src/application/ind'
 import type { Choices, Scenario } from '../src/data/ct-types'
 
-export function bestP1(s: Scenario): Choices {
-  const c: Choices = { p1_dose: s.startingDoseBasis, p1_escalation: s.escalation, p1_population: s.p1Population, p1_n: s.platformGroup.startsWith('vaccine') ? 'medium' : 'small', p1_dlt: 'prespecified' }
-  if (s.special) c[s.special.id] = s.special.correctOptionId
-  return c
-}
-export const goodForm: IndForm = { ...EMPTY_FORM, sponsor: 'Halvern Therapeutics (fictional)', commitments: COMMITMENTS.map((c) => c.id), plan: 'year', ibSections: IB_SECTIONS.map((x) => x.id), safety: ['sentinel', 'stagger', 'src', 'stopping', 'site'], label: 'caution', glp: 'statement', form3674: 'not_apply', form1572: true }
+import { bestP1, goodForm } from './helpers'
+export { bestP1, goodForm }
 
 describe('IND build and review', () => {
   it('an empty IND cannot be submitted; a complete one can', () => {
@@ -71,8 +67,8 @@ describe('IND build and review', () => {
 import { IND_MISSIONS } from '../src/application/missions'
 import { summarise } from '../src/application/IndStep'
 describe('IND missions', () => {
-  it('four missions; the clean IND scores 100 with a complete IND; the hold mission starts on hold and scores 100 after one correct response', () => {
-    expect(IND_MISSIONS).toHaveLength(4)
+  it('four US missions; the clean IND scores 100 with a complete IND; the hold mission starts on hold and scores 100 after one correct response', () => {
+    expect(IND_MISSIONS.filter((m) => m.region === 'US')).toHaveLength(4)
     const clean = IND_MISSIONS[0], hold = IND_MISSIONS[1]
     const s1 = getScenario(clean.scenarioId!)!
     const o1 = runReview(s1, clean.design!, goodForm, { requests: {}, cycles: [] })
