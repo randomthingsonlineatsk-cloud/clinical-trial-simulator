@@ -38,6 +38,15 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 - Changes during the trial, classified for each region: US protocol and information amendments (21 CFR 312.30 and 312.31), EU substantial modifications of Part I or II, non-substantial changes and urgent safety measures (CTR Articles 2, 54 and 81), and India's approvals. Safety reporting deadlines in all three regions, and India's compensation formulas (Seventh Schedule) worked through.
 - Three missions: start in India without a query, India's safety, compensation and academic trial rules (rule 28), and classifying six changes across the regions.
 
+### More regions and the certificate (Phase 4)
+- The UK (combined MHRA and ethics review under the regulations in force since 28 April 2026: validation in 7 days, a decision within 30, 60 days to answer questions and a decision within 10; the notifiable scheme only for the lowest-risk trials; registration before the first participant or within 90 days of approval).
+- Canada (Food and Drug Regulations, Division 5: no objection within 30 days, REB approval and site information before the drug is shipped to a site).
+- Australia (CTN scheme after HREC approval and site governance, or the CTA scheme with TGA evaluation).
+- Japan (clinical trial notification; 30-day PMDA review of the first notification).
+- China (implied approval after 60 working days, or the 30-working-day track for eligible innovative drugs; human genetic resources approval when samples leave China).
+- Each region raises reviewer questions from the design, can object, and has one rule that blocks the first participant if missed. The Phase I result compares start-up across every chosen region.
+- Two missions (five more countries, and the routes and clocks quiz), 12 in all, and a certificate for passing 10 of them at 70% or more, with a verification code.
+
 ## Roadmap
 | Phase | Scope | Status |
 |---|---|---|
@@ -45,7 +54,7 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 | 1 | US IND step, clinical holds, eCTD export, IND missions | Done |
 | 2 | EU CTR and CTIS: Part I and Part II, the CTR clock, refusals and resubmission, transparency, multi-country timeline, 3 missions | Done |
 | 3 | India NDCT Rules 2019 (CT-04 to CT-06, SEC queries, ethics committee, CTRI, compensation, academic trials), changes and safety reporting across regions, 3 missions | Done |
-| 4 | UK, Canada, Australia, Japan and China packs; the remaining missions; the certificate | Planned |
+| 4 | UK, Canada, Australia, Japan and China packs; 2 missions; the certificate | Done |
 
 ## Changes in the move from Macaly (October 2026)
 - Rebuilt as a static site for GitHub Pages; there is no server and no sign-in.
