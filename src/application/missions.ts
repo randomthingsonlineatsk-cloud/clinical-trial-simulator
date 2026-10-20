@@ -4,6 +4,9 @@ import type { Choices } from '../data/ct-types'
 import type { IndSummary } from './IndStep'
 import type { EuSummary } from './EuStep'
 import type { EuForm } from './eu'
+import type { IndiaSummary } from './IndiaStep'
+import { CHANGES, US_OPTS, EU_OPTS, IN_OPTS } from './amend'
+import { deathComp, disabilityComp, injuryComp, rupees } from './india'
 
 export interface QuizItem { id: string; prompt: string; options: string[]; answer: string; explain: string }
 
@@ -11,13 +14,14 @@ export interface IndMission {
   id: string
   title: string
   brief: string
-  kind: 'ind' | 'eu' | 'quiz'
-  region: 'US' | 'EU'
+  kind: 'ind' | 'eu' | 'india' | 'quiz'
+  region: 'US' | 'EU' | 'IN' | 'ALL'
   scenarioId?: string
   design?: Choices
   score?: (s: IndSummary) => number
   euInitial?: Partial<EuForm>
   euScore?: (s: EuSummary) => number
+  inScore?: (s: IndiaSummary) => number
   items?: QuizItem[]
 }
 
@@ -97,4 +101,34 @@ export const IND_MISSIONS: IndMission[] = [
       { id: 'c6', prompt: 'When are the summary of results and the lay summary due?', options: ['Within 6 months of the decision', 'Within 12 months of the end of the trial', 'At the marketing authorisation', 'Only if the trial is positive'], answer: 'Within 12 months of the end of the trial', explain: 'CTR Article 37(4), whatever the outcome of the trial.' },
     ],
   },
+  {
+    id: 'india-cta', kind: 'india', region: 'IN', title: 'Start in India without a query', scenarioId: 'vasclarin',
+    brief: 'Vasclarin (VSC-9), discovered outside India, will also run its first-in-human trial at a fictional unit in India. Apply on Form CT-04 so that CDSCO has nothing to ask, the site’s ethics committee approval is valid and the trial is in CTRI before the first participant: first participant by about day 147.',
+    design: { p1_dose: 'noael', p1_escalation: 'accelerated', p1_population: 'healthy', p1_n: 'small', p1_dlt: 'prespecified' },
+    inScore: (s) => s.firstPatientDay < 0 ? 0 : Math.max(0, 100 - 10 * s.queries - 30 * (s.rejected ? 1 : 0) - Math.max(0, Math.round((s.firstPatientDay - 147) / 3))),
+  },
+  {
+    id: 'india-safety', kind: 'quiz', region: 'IN', title: 'India: safety, compensation and academic trials',
+    brief: 'India’s Chapter VI sets deadlines for serious adverse events and a formula for compensation. Answer seven questions; the case is fictional.',
+    items: [
+      { id: 's1', prompt: 'How soon must the investigator report a serious adverse event to CDSCO, the sponsor and the ethics committee?', options: ['24 hours', '7 days', '14 days', '30 days'], answer: '24 hours', explain: 'NDCT Rules, rule 42. The report after due analysis follows within 14 days, and the ethics committee reports to CDSCO within 30 days.' },
+      { id: 's2', prompt: 'After CDSCO orders compensation, how long does the sponsor have to pay?', options: ['7 days', '30 days', '90 days', 'Six months'], answer: '30 days', explain: 'CDSCO orders the amount within 90 days; the sponsor pays within 30 days of the order (rule 42).' },
+      { id: 's3', prompt: `A 30-year-old healthy volunteer dies of a trial-related cause. Base amount Rs 8 lakh, age factor 207.98, risk factor 4. What is the compensation?`, options: [rupees(deathComp(30, 4)), rupees(deathComp(30, 1)), rupees(800000), rupees(Math.round(deathComp(30, 4) / 2))], answer: rupees(deathComp(30, 4)), explain: `Seventh Schedule: B × F × R / 99.37 = 8,00,000 × 207.98 × 4 / 99.37 = ${rupees(deathComp(30, 4))}. Healthy volunteers carry the highest risk factor, 4.` },
+      { id: 's4', prompt: 'The same participant is left with a 40% permanent disability instead. What is the compensation?', options: [rupees(disabilityComp(deathComp(30, 4), 40)), rupees(Math.round(deathComp(30, 4) * 0.4)), rupees(deathComp(30, 4)), rupees(400000)], answer: rupees(disabilityComp(deathComp(30, 4), 40)), explain: `C × D × 90 / (100 × 100), with C the death compensation: ${rupees(deathComp(30, 4))} × 40 × 90 / 10,000 = ${rupees(disabilityComp(deathComp(30, 4), 40))}.` },
+      { id: 's5', prompt: 'A participant is in hospital for 6 days with a reversible, trial-related injury. With a minimum daily wage of Rs 800 (a figure for this exercise), what is the compensation, on top of free medical management?', options: [rupees(injuryComp(800, 6)), rupees(800 * 6), rupees(injuryComp(800, 6) * 2), 'Nothing: medical management only'], answer: rupees(injuryComp(800, 6)), explain: 'Non-permanent injury: 2 × W × N = 2 × 800 × 6. Medical management is free and comes in addition (rule 40).' },
+      { id: 's6', prompt: 'A hospital tests an approved drug by a new route, for a journal paper only, with ethics committee approval. Does it need CDSCO permission?', options: ['No: it is an academic clinical trial (rule 28)', 'Yes: every trial needs Form CT-04', 'Only if it has more than 100 participants', 'Only CTRI registration'], answer: 'No: it is an academic clinical trial (rule 28)', explain: 'An academic trial of an approved drug for a new indication, route, dose or dosage form, with ethics committee approval and results not used for approval or promotion, needs no permission. If the committee doubts whether it overlaps with a regulatory trial, it asks CDSCO, which answers within 30 working days.' },
+      { id: 's7', prompt: 'How long is an ethics committee’s registration (Form CT-02) valid?', options: ['Two years', 'Three years', 'Five years', 'Without limit'], answer: 'Five years', explain: 'NDCT Rules, rule 9; renewal is applied for 90 days before it expires (rule 10).' },
+    ],
+  },
+  {
+    id: 'amendments', kind: 'quiz', region: 'ALL', title: 'Classify the changes',
+    brief: 'Your phase 1 trial runs in the US, the EU and India. Six things happen. For each, decide what the rules require in the region named.',
+    items: [pick('cohort', 'us'), pick('cohort', 'eu'), pick('site', 'us'), pick('site', 'eu'), pick('site', 'in'), pick('rsi', 'eu'), pick('typo', 'eu'), pick('liver', 'us'), pick('liver', 'eu'), pick('liver', 'in'), pick('age', 'us')],
+  },
 ]
+
+function pick(id: string, region: 'us' | 'eu' | 'in'): QuizItem {
+  const c = CHANGES.find((x) => x.id === id)!
+  const name = { us: 'the US', eu: 'the EU', in: 'India' }[region]
+  return { id: `${id}-${region}`, prompt: `${c.text} What is needed in ${name}?`, options: region === 'us' ? US_OPTS : region === 'eu' ? EU_OPTS : IN_OPTS, answer: c[region], explain: c.why[region] }
+}

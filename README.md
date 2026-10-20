@@ -31,14 +31,21 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 - The EU dossier exports as a checklist: CTIS is not eCTD.
 - Three EU missions: a three-country start-up, Part I or Part II, and the CTR clock and transparency.
 
+### Clinical trial application: India, and changes during the trial (Phase 3)
+- India under the New Drugs and Clinical Trials Rules, 2019: Form CT-04 with the Second Schedule documents (rule 21), CDSCO's decision within 90 working days (rule 22), or 30 with deemed approval for a drug discovered and developed in India (rule 23), queries from the Subject Expert Committee that pause the clock, rejection and reconsideration, and permission in Form CT-06, valid two years (rule 26).
+- Consent in English and the local language, with audio-video recording for vulnerable participants (Third Schedule); the compensation undertaking (rule 39(5)); an ethics committee registered with CDSCO (CT-01 to CT-02, valid five years); and CTRI registration before the first participant (rule 25). An unregistered committee or a late CTRI registration blocks the first enrolment.
+- Choose any mix of US, EU and India in the setup; the Phase I result compares the start-up of every chosen region.
+- Changes during the trial, classified for each region: US protocol and information amendments (21 CFR 312.30 and 312.31), EU substantial modifications of Part I or II, non-substantial changes and urgent safety measures (CTR Articles 2, 54 and 81), and India's approvals. Safety reporting deadlines in all three regions, and India's compensation formulas (Seventh Schedule) worked through.
+- Three missions: start in India without a query, India's safety, compensation and academic trial rules (rule 28), and classifying six changes across the regions.
+
 ## Roadmap
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Move from Macaly to GitHub Pages, no sign-in | Done |
 | 1 | US IND step, clinical holds, eCTD export, IND missions | Done |
 | 2 | EU CTR and CTIS: Part I and Part II, the CTR clock, refusals and resubmission, transparency, multi-country timeline, 3 missions | Done |
-| 3 | India NDCT Rules 2019 (CT-04/CT-06, SEC review) | Planned |
-| 4 | Ethics, consent, insurance and registries; amendments and timeline comparison | Planned |
+| 3 | India NDCT Rules 2019 (CT-04 to CT-06, SEC queries, ethics committee, CTRI, compensation, academic trials), changes and safety reporting across regions, 3 missions | Done |
+| 4 | UK, Canada, Australia, Japan and China packs; the remaining missions; the certificate | Planned |
 
 ## Changes in the move from Macaly (October 2026)
 - Rebuilt as a static site for GitHub Pages; there is no server and no sign-in.
