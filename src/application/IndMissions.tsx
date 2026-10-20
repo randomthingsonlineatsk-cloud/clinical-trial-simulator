@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getScenario } from '../data/ct-scenarios'
 import IndStep, { type IndSummary } from './IndStep'
 import EuStep, { type EuSummary } from './EuStep'
+import IndiaStep, { type IndiaSummary } from './IndiaStep'
 import { IND_MISSIONS, type IndMission } from './missions'
 import { loadMissionAttempts, saveMissionAttempt } from './store'
+import { SAFETY_RULES } from './amend'
 
 function Quiz({ m, onDone }: { m: IndMission; onDone: (score: number, detail: string) => void }) {
   const items = m.items!
@@ -58,18 +60,26 @@ export default function IndMissions() {
           ? <IndStep scenario={scenario} choices={active.design!} doneLabel="Finish and score" onBack={() => setActive(null)} onDone={(_c, s: IndSummary) => finish(active.score!(s), s.holdCycles ? `study may proceed on day ${s.proceedDay} after ${s.holdCycles} hold cycle${s.holdCycles > 1 ? 's' : ''}` : `study may proceed on day ${s.proceedDay}, ${s.requests} information request${s.requests === 1 ? '' : 's'}`)} />
           : active.kind === 'eu' && scenario
             ? <EuStep scenario={scenario} choices={active.design!} initial={active.euInitial} lockedCountries doneLabel="Finish and score" onBack={() => setActive(null)} onDone={(_c, s: EuSummary) => finish(active.euScore!(s), `${s.countries.filter((c) => c.status === 'authorised').length} of ${s.countries.length} countries authorised; first subject on day ${s.firstPatientDay}; ${s.rfis} question${s.rfis === 1 ? '' : 's'}, ${s.refusals} refusal${s.refusals === 1 ? '' : 's'}`)} />
-            : <Quiz m={active} onDone={finish} />}
+            : active.kind === 'india' && scenario
+              ? <IndiaStep scenario={scenario} choices={active.design!} doneLabel="Finish and score" onBack={() => setActive(null)} onDone={(_c, s: IndiaSummary) => finish(active.inScore!(s), `first participant on day ${s.firstPatientDay}; ${s.queries} quer${s.queries === 1 ? 'y' : 'ies'}${s.rejected ? '; rejected once' : ''}`)} />
+              : <Quiz m={active} onDone={finish} />}
       </div>
     )
   }
   return (
     <div className="space-y-3">
       <p className="text-sm text-lab-text-muted">Practise the trial applications on their own. In Play, the same steps run before Phase I for the regions you choose.</p>
+      <details className="rounded border border-lab-line bg-lab-panel/80 p-3">
+        <summary className="cursor-pointer font-mono text-xs text-lab-text-muted">Safety reporting deadlines: US, EU and India</summary>
+        <table className="mt-2 w-full text-xs"><tbody>
+          {SAFETY_RULES.map((r, i) => <tr key={i} className="border-t border-lab-line"><td className="py-1 pr-2 font-mono text-lab-cyan align-top">{r.region}</td><td className="py-1 pr-2 text-lab-text">{r.what}</td><td className="py-1 pr-2 font-mono text-lab-text whitespace-nowrap align-top">{r.deadline}</td><td className="py-1 text-lab-text-muted align-top">{r.cite}</td></tr>)}
+        </tbody></table>
+      </details>
       {IND_MISSIONS.map((m, idx) => {
         const best = attempts.filter((a) => a.missionId === m.id).reduce((x, a) => Math.max(x, a.score), -1)
         return (
           <div key={m.id} className="space-y-2">
-          {(idx === 0 || IND_MISSIONS[idx - 1].region !== m.region) && <p className="text-[10px] uppercase tracking-widest font-mono text-lab-text-muted pt-2">{m.region === 'US' ? 'United States: IND' : 'European Union: CTR and CTIS'}</p>}
+          {(idx === 0 || IND_MISSIONS[idx - 1].region !== m.region) && <p className="text-[10px] uppercase tracking-widest font-mono text-lab-text-muted pt-2">{({ US: 'United States: IND', EU: 'European Union: CTR and CTIS', IN: 'India: NDCT Rules, 2019', ALL: 'All regions: changes and safety' } as Record<string, string>)[m.region]}</p>}
           <Card className="bg-lab-panel/80 border-lab-line gap-2 py-4">
             <CardHeader className="pb-0"><CardTitle className="font-mono text-sm text-lab-text">{m.title}{best >= 0 && <span className="text-lab-emerald font-normal"> · best {best}%</span>}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
