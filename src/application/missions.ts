@@ -5,6 +5,7 @@ import type { IndSummary } from './IndStep'
 import type { EuSummary } from './EuStep'
 import type { EuForm } from './eu'
 import type { IndiaSummary } from './IndiaStep'
+import type { RegionsResult } from './RegionsStep'
 import { CHANGES, US_OPTS, EU_OPTS, IN_OPTS } from './amend'
 import { deathComp, disabilityComp, injuryComp, rupees } from './india'
 
@@ -14,14 +15,15 @@ export interface IndMission {
   id: string
   title: string
   brief: string
-  kind: 'ind' | 'eu' | 'india' | 'quiz'
-  region: 'US' | 'EU' | 'IN' | 'ALL'
+  kind: 'ind' | 'eu' | 'india' | 'regions' | 'quiz'
+  region: 'US' | 'EU' | 'IN' | 'MORE' | 'ALL'
   scenarioId?: string
   design?: Choices
   score?: (s: IndSummary) => number
   euInitial?: Partial<EuForm>
   euScore?: (s: EuSummary) => number
   inScore?: (s: IndiaSummary) => number
+  regionsScore?: (r: RegionsResult) => number
   items?: QuizItem[]
 }
 
@@ -118,6 +120,24 @@ export const IND_MISSIONS: IndMission[] = [
       { id: 's5', prompt: 'A participant is in hospital for 6 days with a reversible, trial-related injury. With a minimum daily wage of Rs 800 (a figure for this exercise), what is the compensation, on top of free medical management?', options: [rupees(injuryComp(800, 6)), rupees(800 * 6), rupees(injuryComp(800, 6) * 2), 'Nothing: medical management only'], answer: rupees(injuryComp(800, 6)), explain: 'Non-permanent injury: 2 × W × N = 2 × 800 × 6. Medical management is free and comes in addition (rule 40).' },
       { id: 's6', prompt: 'A hospital tests an approved drug by a new route, for a journal paper only, with ethics committee approval. Does it need CDSCO permission?', options: ['No: it is an academic clinical trial (rule 28)', 'Yes: every trial needs Form CT-04', 'Only if it has more than 100 participants', 'Only CTRI registration'], answer: 'No: it is an academic clinical trial (rule 28)', explain: 'An academic trial of an approved drug for a new indication, route, dose or dosage form, with ethics committee approval and results not used for approval or promotion, needs no permission. If the committee doubts whether it overlaps with a regulatory trial, it asks CDSCO, which answers within 30 working days.' },
       { id: 's7', prompt: 'How long is an ethics committee’s registration (Form CT-02) valid?', options: ['Two years', 'Three years', 'Five years', 'Without limit'], answer: 'Five years', explain: 'NDCT Rules, rule 9; renewal is applied for 90 days before it expires (rule 10).' },
+    ],
+  },
+  {
+    id: 'five-regions', kind: 'regions', region: 'MORE', title: 'Five more countries, one protocol', scenarioId: 'vasclarin',
+    brief: 'Vasclarin (VSC-9) will also start in the UK, Canada, Australia, Japan and China. Apply in all five so that none raises a question, none objects and nothing blocks the first participant.',
+    design: { p1_dose: 'noael', p1_escalation: 'accelerated', p1_population: 'healthy', p1_n: 'small', p1_dlt: 'prespecified' },
+    regionsScore: (r) => Math.max(0, 100 - r.summaries.reduce((t, x) => t + 4 * x.questions + (x.objection ? 25 : 0) + (x.firstPatientDay < 0 ? 20 : 0), 0)),
+  },
+  {
+    id: 'pick-route', kind: 'quiz', region: 'MORE', title: 'Pick the route and the clock',
+    brief: 'Six questions on the routes and clocks of the UK, Canada, Australia, Japan and China.',
+    items: [
+      { id: 'r1', prompt: 'UK: may a first-in-human trial use the 14-day notifiable scheme?', options: ['No: it is for the lowest-risk trials, such as some phase 3 and 4 trials', 'Yes, if the ethics committee agrees', 'Yes, always', 'Only in Scotland'], answer: 'No: it is for the lowest-risk trials, such as some phase 3 and 4 trials', explain: 'The notifiable scheme covers the lowest-risk trials; everything else goes to the combined review: validation in 7 days and a decision within 30.' },
+      { id: 'r2', prompt: 'UK: after a request for further information, how long do the sponsor and then the regulators have?', options: ['60 days to answer; a decision within 10 days', '12 days to answer; 31 more days', '30 days; 30 days', 'No limit'], answer: '60 days to answer; a decision within 10 days', explain: 'Under the regulations in force since 28 April 2026.' },
+      { id: 'r3', prompt: 'Canada: when may a trial proceed?', options: ['If Health Canada does not object within 30 days of a complete application, with REB approval at each site', 'Only after a written approval letter, usually within 90 days', 'Immediately after REB approval', 'After 60 working days'], answer: 'If Health Canada does not object within 30 days of a complete application, with REB approval at each site', explain: 'Food and Drug Regulations, C.05.006; Health Canada usually sends a no objection letter.' },
+      { id: 'r4', prompt: 'Australia: under the CTN scheme, who reviews the scientific data?', options: ['The HREC and the sponsor; the TGA is only notified', 'The TGA, in 50 working days', 'The site’s pharmacy', 'Nobody'], answer: 'The HREC and the sponsor; the TGA is only notified', explain: 'Under the CTA scheme the TGA evaluates the data; most trials use the CTN scheme.' },
+      { id: 'r5', prompt: 'Japan: what happens after the first clinical trial notification for a product?', options: ['PMDA has 30 days to review before the trial may start', 'The trial may start the next day', 'MHLW approves within 90 days', 'Nothing: Japan has no notification'], answer: 'PMDA has 30 days to review before the trial may start', explain: 'PMD Act, article 80-2; later notifications for the product do not all trigger a new 30-day hold.' },
+      { id: 'r6', prompt: 'China: what is the standard clock for a drug clinical trial application?', options: ['Implied approval if the CDE raises no objection within 60 working days', '30 calendar days', '90 days with an approval letter', '45 working days'], answer: 'Implied approval if the CDE raises no objection within 60 working days', explain: 'An expedited 30-working-day track exists for eligible innovative drugs (Announcement No. 86 of 2025).' },
     ],
   },
   {

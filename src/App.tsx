@@ -4,6 +4,7 @@ import IndStep, { type IndSummary } from './application/IndStep'
 import IndMissions from './application/IndMissions'
 import EuStep, { StartupTimeline, indRow, type EuSummary } from './application/EuStep'
 import IndiaStep, { type IndiaSummary } from './application/IndiaStep'
+import RegionsStep, { type RegionsResult } from './application/RegionsStep'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -89,7 +90,7 @@ function GradeRow({ grade }: { grade: Grade }) {
 // ---------------------------------------------------------------------------
 
 function phaseNumberOf(step: Step): number {
-  if (step === 'brief' || step === 'p1' || step === 'ind' || step === 'eu' || step === 'india' || step === 'p1r') return 1
+  if (step === 'brief' || step === 'p1' || step === 'ind' || step === 'eu' || step === 'india' || step === 'more' || step === 'p1r') return 1
   if (step === 'p2' || step === 'p2r' || step === 'meeting') return 2
   if (step === 'p3' || step === 'p3r') return 3
   if (step === 'phaseIV') return 4
@@ -657,7 +658,7 @@ function GlossaryTab() {
 // Play tab — the main simulation flow
 // ---------------------------------------------------------------------------
 
-type Step = 'select' | 'brief' | 'p1' | 'ind' | 'eu' | 'india' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
+type Step = 'select' | 'brief' | 'p1' | 'ind' | 'eu' | 'india' | 'more' | 'p1r' | 'p2' | 'p2r' | 'meeting' | 'p3' | 'p3r' | 'report' | 'phaseIV'
 type Difficulty = 'guided' | 'expert'
 type PlayMode = 'curated' | 'endless' | 'custom'
 
@@ -790,8 +791,9 @@ function PhaseResultView({ outcome, flows, grades, onNext, nextLabel, extra, ext
 function PlayTab() {
   const [mode, setMode] = useState<PlayMode>('curated')
   const [difficulty, setDifficulty] = useState<Difficulty>('guided')
-  const [gates, setGates] = useState<{ us: boolean; eu: boolean; in: boolean }>({ us: true, eu: false, in: false })
-  const indGate = gates.us, euGate = gates.eu, inGate = gates.in
+  const [gates, setGates] = useState<{ us: boolean; eu: boolean; in: boolean; more: boolean }>({ us: true, eu: false, in: false, more: false })
+  const indGate = gates.us, euGate = gates.eu, inGate = gates.in, moreGate = gates.more
+  const [moreResult, setMoreResult] = useState<RegionsResult | null>(null)
   const [indSummary, setIndSummary] = useState<IndSummary | null>(null)
   const [euSummary, setEuSummary] = useState<EuSummary | null>(null)
   const [inSummary, setInSummary] = useState<IndiaSummary | null>(null)
@@ -859,10 +861,11 @@ function PlayTab() {
     if (!scenario) return
     const g = gradePhase(scenario, 'p1', choices)
     setGrades((prev) => [...prev.filter((x) => x.phase !== 'p1'), ...g])
-    setIndSummary(null); setEuSummary(null); setInSummary(null)
+    setIndSummary(null); setEuSummary(null); setInSummary(null); setMoreResult(null)
     if (indGate) { setStep('ind'); return }
     if (euGate) { setStep('eu'); return }
     if (inGate) { setStep('india'); return }
+    if (moreGate) { setStep('more'); return }
     setP1(runPhase1(scenario, choices, seed))
     setStep('p1r')
   }
@@ -874,6 +877,7 @@ function PlayTab() {
     setChoices(next); setIndSummary(summary)
     if (euGate) { setStep('eu'); return }
     if (inGate) { setStep('india'); return }
+    if (moreGate) { setStep('more'); return }
     setP1(runPhase1(scenario, next, seed))
     setStep('p1r')
   }
@@ -883,6 +887,7 @@ function PlayTab() {
     const next = { ...choices, ...corrected }
     setChoices(next); setEuSummary(summary)
     if (inGate) { setStep('india'); return }
+    if (moreGate) { setStep('more'); return }
     setP1(runPhase1(scenario, next, seed))
     setStep('p1r')
   }
@@ -890,6 +895,14 @@ function PlayTab() {
     if (!scenario) return
     const next = { ...choices, ...corrected }
     setChoices(next); setInSummary(summary)
+    if (moreGate) { setStep('more'); return }
+    setP1(runPhase1(scenario, next, seed))
+    setStep('p1r')
+  }
+  function afterMore(corrected: Choices, r: RegionsResult) {
+    if (!scenario) return
+    const next = { ...choices, ...corrected }
+    setChoices(next); setMoreResult(r)
     setP1(runPhase1(scenario, next, seed))
     setStep('p1r')
   }
@@ -966,6 +979,7 @@ function PlayTab() {
     lines.push('Decisions:')
     report.grades.forEach((g) => { lines.push(`  [${g.phase.toUpperCase()}] ${g.title}: ${g.chosenLabel} — ${g.verdict} (${g.points}/${g.maxPoints})`); lines.push(`    ${g.explanation}`) })
     if (indSummary) { lines.push(''); lines.push('US IND:'); lines.push(`  Study could proceed on day ${indSummary.proceedDay}; first patient in on day ${indSummary.firstPatientDay}; clinical hold cycles: ${indSummary.holdCycles}; information requests: ${indSummary.requests}.`); indSummary.findings.forEach((f) => lines.push(`  - ${f}`)) }
+    if (moreResult) { lines.push(''); lines.push('Other regions:'); moreResult.summaries.forEach((r) => lines.push(`  ${r.name}: ${r.firstPatientDay > 0 ? `authorised day ${r.authorisedDay}, first participant day ${r.firstPatientDay}` : r.objection ? 'objection' : 'blocked'}; questions: ${r.questions}.`)) }
     if (inSummary) { lines.push(''); lines.push('India (NDCT Rules, 2019):'); lines.push(`  Permission on day ${inSummary.permitDay}${inSummary.deemed ? ' (deemed)' : ''}; first participant on day ${inSummary.firstPatientDay}; queries: ${inSummary.queries}${inSummary.rejected ? '; rejected once, granted on reconsideration' : ''}.`) }
     if (euSummary) { lines.push(''); lines.push('EU clinical trial application (Regulation (EU) No 536/2014):'); euSummary.countries.forEach((c) => lines.push(`  ${c.name}: ${c.status}${c.status === 'authorised' ? ` on day ${c.decisionDay}, first subject day ${c.firstPatientDay}` : ''}`)); lines.push(`  Reviewer questions: ${euSummary.rfis}; refusals: ${euSummary.refusals}; transparency category ${euSummary.category}.`) }
     if (phaseIvOutcomeNote) { lines.push(''); lines.push('Phase IV outcome:'); lines.push(`  ${phaseIvOutcomeNote}`) }
@@ -1025,10 +1039,10 @@ function PlayTab() {
         <div>
           <p className="text-xs font-mono text-lab-text-muted mb-1.5">Trial application before first patient in</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {([['us', 'US IND'], ['eu', 'EU (CTIS)'], ['in', 'India (CT-04)']] as const).map(([k, l]) => (
+            {([['us', 'US IND'], ['eu', 'EU (CTIS)'], ['in', 'India (CT-04)'], ['more', 'UK, Canada, Australia, Japan, China']] as const).map(([k, l]) => (
               <Button key={k} aria-pressed={gates[k]} onClick={() => setGates({ ...gates, [k]: !gates[k] })} variant="outline" size="sm" className={`border-2 font-mono ${gates[k] ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>{gates[k] ? '☑ ' : '☐ '}{l}</Button>
             ))}
-            <Button onClick={() => setGates({ us: false, eu: false, in: false })} variant="outline" size="sm" className={`border-2 font-mono ${!indGate && !euGate && !inGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
+            <Button onClick={() => setGates({ us: false, eu: false, in: false, more: false })} variant="outline" size="sm" className={`border-2 font-mono ${!indGate && !euGate && !inGate && !moreGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
           </div>
           <p className="text-[11px] text-lab-text-muted mt-1">Choose one or more. Each chosen region must authorise the trial before its sites open; the Phase I result shows the start-up timeline side by side.</p>
         </div>
@@ -1130,28 +1144,35 @@ function PlayTab() {
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel={indGate ? 'Lock protocol and prepare the IND' : euGate ? 'Lock protocol and prepare the EU application' : inGate ? 'Lock protocol and prepare the India application' : 'Lock protocol and run Phase I'} onBack={() => setStep('brief')} backLabel="Back to program brief" />
+      <DecisionForm scenario={scenario} phase="p1" choices={choices} setChoices={setChoices} difficulty={difficulty} onSubmit={submitP1} submitLabel={indGate ? 'Lock protocol and prepare the IND' : euGate ? 'Lock protocol and prepare the EU application' : inGate ? 'Lock protocol and prepare the India application' : moreGate ? 'Lock protocol and prepare the applications' : 'Lock protocol and run Phase I'} onBack={() => setStep('brief')} backLabel="Back to program brief" />
     </div>
   )
   if (step === 'ind') return (
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <IndStep scenario={scenario} choices={choices} onBack={() => setStep('p1')} onDone={afterInd} doneLabel={euGate ? 'Go to the EU application' : inGate ? 'Go to the India application' : undefined} />
+      <IndStep scenario={scenario} choices={choices} onBack={() => setStep('p1')} onDone={afterInd} doneLabel={euGate ? 'Go to the EU application' : inGate ? 'Go to the India application' : moreGate ? 'Go to the other regions' : undefined} />
     </div>
   )
   if (step === 'eu') return (
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <EuStep scenario={scenario} choices={choices} onBack={() => setStep(indGate ? 'ind' : 'p1')} onDone={afterEu} extraRows={indSummary ? [indRow(indSummary)] : []} doneLabel={inGate ? 'Go to the India application' : undefined} />
+      <EuStep scenario={scenario} choices={choices} onBack={() => setStep(indGate ? 'ind' : 'p1')} onDone={afterEu} extraRows={indSummary ? [indRow(indSummary)] : []} doneLabel={inGate ? 'Go to the India application' : moreGate ? 'Go to the other regions' : undefined} />
     </div>
   )
   if (step === 'india') return (
     <div className="space-y-4">
       {progressBar}
       {abandonControl}
-      <IndiaStep scenario={scenario} choices={choices} onBack={() => setStep(euGate ? 'eu' : indGate ? 'ind' : 'p1')} onDone={afterIndia} extraRows={[...(indSummary ? [indRow(indSummary)] : []), ...(euSummary ? euSummary.rows : [])]} />
+      <IndiaStep scenario={scenario} choices={choices} onBack={() => setStep(euGate ? 'eu' : indGate ? 'ind' : 'p1')} onDone={afterIndia} doneLabel={moreGate ? 'Go to the other regions' : undefined} extraRows={[...(indSummary ? [indRow(indSummary)] : []), ...(euSummary ? euSummary.rows : [])]} />
+    </div>
+  )
+  if (step === 'more') return (
+    <div className="space-y-4">
+      {progressBar}
+      {abandonControl}
+      <RegionsStep scenario={scenario} choices={choices} onBack={() => setStep(inGate ? 'india' : euGate ? 'eu' : indGate ? 'ind' : 'p1')} onDone={afterMore} extraRows={[...(indSummary ? [indRow(indSummary)] : []), ...(euSummary ? euSummary.rows : []), ...(inSummary ? [inSummary.row] : [])]} />
     </div>
   )
   if (step === 'p1r' && p1) return <div className="space-y-4">{progressBar}<PhaseResultView outcome={p1} flows={flows} grades={grades.filter((g) => g.phase === 'p1')} onNext={() => setStep('p2')} nextLabel="Design Phase II" extra={indSummary ? (
@@ -1161,7 +1182,7 @@ function PlayTab() {
         <p className="text-xs text-lab-text-muted">{indSummary.holdCycles ? `${indSummary.holdCycles} clinical hold cycle${indSummary.holdCycles > 1 ? 's' : ''} cost ${indSummary.proceedDay - 30} days.` : 'No clinical hold.'}{indSummary.requests ? ` ${indSummary.requests} information request${indSummary.requests > 1 ? 's' : ''}.` : ''}{indSummary.corrected.length ? ` Protocol changed to answer FDA: ${indSummary.corrected.join(', ')}.` : ''}</p>
       </CardContent>
     </Card>
-  ) : undefined} extraAfter={euSummary || inSummary ? (
+  ) : undefined} extraAfter={euSummary || inSummary || moreResult ? (
     <div className="space-y-3">
       {euSummary && (
       <Card className={`bg-lab-panel/80 border-2 ${euSummary.refusals ? 'border-lab-red' : 'border-lab-emerald'}`}>
@@ -1178,7 +1199,14 @@ function PlayTab() {
           </CardContent>
         </Card>
       )}
-      <StartupTimeline rows={[...(indSummary ? [indRow(indSummary)] : []), ...(euSummary ? euSummary.rows : []), ...(inSummary ? [inSummary.row] : [])]} />
+      {moreResult && (
+        <Card className="bg-lab-panel/80 border-2 border-lab-line">
+          <CardContent className="pt-4 space-y-1">
+            {moreResult.summaries.map((r) => <p key={r.code} className="font-mono text-xs text-lab-text">{r.name}: {r.firstPatientDay > 0 ? `authorised day ${r.authorisedDay}, first participant day ${r.firstPatientDay}` : r.objection ? 'objection, not started' : 'blocked: ' + r.problems[0]}{r.questions ? ` · ${r.questions} question${r.questions > 1 ? 's' : ''}` : ''}</p>)}
+          </CardContent>
+        </Card>
+      )}
+      <StartupTimeline rows={[...(indSummary ? [indRow(indSummary)] : []), ...(euSummary ? euSummary.rows : []), ...(inSummary ? [inSummary.row] : []), ...(moreResult ? moreResult.rows : [])]} />
     </div>
   ) : undefined} /></div>
   if (step === 'p2') return (
