@@ -1,0 +1,58 @@
+// ---------------------------------------------------------------------------
+// Glossary, RMP/REMS notes, and Phase IV (post-marketing) content.
+// ---------------------------------------------------------------------------
+
+export interface GlossaryEntry { term: string; group: string; body: string }
+
+export const GLOSSARY: GlossaryEntry[] = [
+  { term: 'Good Clinical Practice (GCP / ICH E6)', group: 'Framework', body: 'The international ethical and scientific quality standard for trials in humans. Its organizing ideas: subject rights/safety/wellbeing prevail over the interests of science, and trial data must be credible and reconstructable — a protocol written before dosing starts, informed consent, ethics review, pre-specified stopping rules, and documentation good enough to rebuild every decision.' },
+  { term: 'ICH E8 — general considerations for clinical studies', group: 'Framework', body: 'Quality-by-design thinking for a development program: identify what is critical to quality for each study, choose the population and endpoints that answer the real question, and design the program so each study de-risks the next.' },
+  { term: 'ICH E9 — statistical principles', group: 'Framework', body: 'The statistical backbone: pre-specification of the primary endpoint and analysis, control of type I error, handling of multiplicity and interim looks, intention-to-treat, and pre-defined handling of missing data.' },
+  { term: 'ICH E10 — choice of control group', group: 'Framework', body: 'Placebo gives the cleanest attribution but is unethical where withholding effective therapy causes harm — the usual fix is an add-on design (background therapy for everyone, investigational drug or placebo on top). Active control answers the comparative question but needs a larger trial. Single-arm is acceptable only where natural history is poor, consistent, and well documented.' },
+  { term: 'Phase I', group: 'Phases', body: 'First administration to humans. The question is tolerability and pharmacokinetics, plus initial pharmacodynamics. Typically 20-80 subjects with sentinel dosing and staggering. Output: a maximum tolerated dose (where relevant) and a recommended Phase II dose.' },
+  { term: 'Phase II', group: 'Phases', body: 'Proof of concept and dose finding in the target population — does the drug do anything useful, at what dose, with what early safety profile. Output: an effect estimate credible enough to power a confirmatory trial.' },
+  { term: 'Phase III', group: 'Phases', body: 'Confirmatory. Adequate and well-controlled trials in a representative population, with a pre-specified clinically meaningful primary endpoint, designed to support a specific labeled claim.' },
+  { term: 'Phase IV', group: 'Phases', body: 'Post-authorization safety surveillance, required post-marketing studies, and studies in populations not fully characterized before approval — rare adverse events often only become visible here.' },
+  { term: 'NOAEL-derived starting dose', group: 'First-in-human', body: 'Take the No Observed Adverse Effect Level in the most sensitive relevant species, convert to a human equivalent dose, and divide by a safety factor of at least 10. Works when risk is toxicological.' },
+  { term: 'MABEL-derived starting dose', group: 'First-in-human', body: 'Minimum Anticipated Biological Effect Level: the dose predicted, from human in vitro potency and receptor-occupancy modeling, to produce minimal pharmacological effect. Required when risk is pharmacological rather than toxicological, or no animal species is pharmacologically relevant — immune agonists, cytokine-pathway agents, and living cell products are the classic cases.' },
+  { term: 'Sentinel dosing and staggering', group: 'First-in-human', body: 'Dose one subject first, alone, then wait before dosing the rest — so an unanticipated acute reaction affects exactly one person, not a whole cohort.' },
+  { term: 'Dose-limiting toxicity (DLT)', group: 'First-in-human', body: 'A protocol-defined toxicity — specified by type, grade, and observation window — that prevents further escalation and counts toward the stopping rule. Must be defined in advance.' },
+  { term: '3+3 escalation', group: 'Dose escalation', body: 'Three subjects per level; expand to six on one DLT; stop at two-of-six DLTs. Simple and transparent, but uses only the current cohort\u2019s data and often selects a dose below the true MTD.' },
+  { term: 'Bayesian / CRM and BLRM designs', group: 'Dose escalation', body: 'Model-based escalation: a dose-toxicity model updates after every cohort, recommending the dose closest to a target toxicity rate, usually under an overdose-control constraint. Uses all accumulated data and handles delayed toxicity far better than 3+3.' },
+  { term: 'Surrogate vs. clinical endpoint', group: 'Endpoints', body: 'A clinical endpoint measures how a patient feels, functions, or survives. A surrogate substitutes for it and is only acceptable when evidence links changes in it to changes in outcome — that link is drug-class and even platform dependent.' },
+  { term: 'Superiority design', group: 'Design', body: 'Demonstrates the new treatment beats the control on the primary endpoint. Interpretable even under imperfect conduct, since sloppiness pushes results toward the null, not away from it.' },
+  { term: 'Non-inferiority design', group: 'Design', body: 'Demonstrates the new treatment is not worse than an active comparator by more than a pre-specified margin. Requires a comparator with a reliably quantified effect, a margin justified from historical data, and assay sensitivity. Poor trial conduct biases a non-inferiority trial toward success — the opposite of superiority. Meaningless against placebo.' },
+  { term: 'Interim analysis and alpha-spending', group: 'Statistics', body: 'Testing more than once inflates type I error. A group-sequential design spends the 5% across looks via a pre-specified alpha-spending function. Futility-only interims cost no alpha, since stopping early for lack of effect can only reduce false positives.' },
+  { term: 'Randomization ratio', group: 'Design', body: '1:1 gives maximum power for a fixed total N. Unequal allocation (2:1, 3:1) can build a larger safety database or aid recruitment, but costs power — roughly 12% at 2:1, around 25% at 3:1.' },
+  { term: 'Live attenuated vaccine', group: 'Vaccine platforms', body: 'A weakened, still-replicating pathogen strain. Induces broad, durable immunity, often from one dose, but carries a unique risk: reversion to virulence and shedding/transmission to unvaccinated contacts, requiring specific monitoring.' },
+  { term: 'Inactivated vaccine', group: 'Vaccine platforms', body: 'A chemically killed, non-replicating whole pathogen. Cannot revert or replicate by definition; often needs a priming series and an adjuvant, and typically induces a less durable response than live vaccines.' },
+  { term: 'Protein subunit vaccine', group: 'Vaccine platforms', body: 'A purified piece of the pathogen (often a stabilized surface protein) plus an adjuvant. Well-established, non-replicating, generally well tolerated, but often needs an adjuvant and priming series for adequate response.' },
+  { term: 'Toxoid vaccine', group: 'Vaccine platforms', body: 'An inactivated bacterial toxin that keeps its immunogenicity but not its toxicity. Distinctive strength: several toxoid vaccines target a genuinely well-established immune correlate of protection (a protective antitoxin titer), letting immunogenicity alone support approval.' },
+  { term: 'Conjugate vaccine', group: 'Vaccine platforms', body: 'A bacterial polysaccharide chemically linked to a carrier protein, converting a T-cell-independent antigen into one that primes infant immune systems and immunologic memory. Distinctive risks: carrier-protein interference between vaccines sharing a carrier, and the need for dedicated infant immunogenicity bridging.' },
+  { term: 'Non-replicating viral vector vaccine', group: 'Vaccine platforms', body: 'A harmless, replication-deficient virus engineered to carry the target pathogen\u2019s antigen gene into cells. Distinctive risk: pre-existing immunity to the vector itself (from prior natural exposure) can blunt the response to the encoded antigen.' },
+  { term: 'mRNA / lipid nanoparticle vaccine', group: 'Vaccine platforms', body: 'Lipid-nanoparticle-encapsulated messenger RNA encoding the target antigen, translated by host cells. Enables rapid antigen redesign, but has a well-documented reactogenicity profile and real-world cold-chain/storage considerations.' },
+  { term: 'DNA plasmid vaccine', group: 'Vaccine platforms', body: 'A bacterial plasmid encoding the antigen, delivered (often with electroporation to boost uptake) so host cells produce it in place. Advantage: room-temperature stability; historical limitation: lower immunogenicity without a delivery-enhancing method.' },
+  { term: 'Accelerated / conditional approval', group: 'Regulatory', body: 'A pathway some authorities offer for serious conditions with unmet need, granting approval based on a reasonably likely surrogate endpoint, contingent on completing a confirmatory post-marketing trial. Failure to confirm benefit can lead to withdrawal.' },
+  { term: 'Regulatory review divergence', group: 'Regulatory', body: 'Different authorities apply genuinely different conventions on the same evidence: how many pivotal trials are expected, how strictly a surrogate or non-inferiority margin is scrutinized, and whether an accelerated pathway exists at all — the same dataset can reasonably reach different verdicts at different agencies.' },
+]
+
+export const RMP_NOTE = 'A Risk Management Plan (RMP), required by many regulators in some form, documents a product\u2019s safety specification, the planned pharmacovigilance activities to characterize risk further, and the risk minimization measures in place — a living document updated across the product\u2019s lifecycle.'
+
+export const REMS_NOTE = 'A Risk Evaluation and Mitigation Strategy (REMS)-style commitment for higher-risk products can include a patient medication guide, a communication plan for healthcare providers, and Elements To Assure Safe Use such as prescriber certification, mandatory monitoring, or restricted distribution.'
+
+export interface PhaseIvEvent { headline: string; description: string; goodResponseNote: string; badResponseNote: string }
+
+export const PHASE_IV_EVENTS: PhaseIvEvent[] = [
+  {
+    headline: 'A post-marketing safety signal emerges',
+    description: 'Six months after launch, spontaneous adverse event reports suggest a possible rare, serious reaction not seen in the pre-approval database. Regulators request an urgent safety review.',
+    goodResponseNote: 'A prompt, thorough safety review with a transparent risk communication update maintains regulatory confidence and keeps the product on the market with updated labeling.',
+    badResponseNote: 'A delayed or dismissive response damages regulatory trust and can trigger a more severe compliance action than the signal alone would have warranted.',
+  },
+  {
+    headline: 'The confirmatory trial for a provisional approval is due',
+    description: 'The confirmatory Phase IV trial committed to at the time of provisional approval has reached its deadline.',
+    goodResponseNote: 'A completed, positive confirmatory trial converts the provisional approval into a full approval.',
+    badResponseNote: 'A missed deadline or a confirmatory trial that fails to verify the surrogate\u2019s predicted benefit converts the provisional approval into a withdrawal.',
+  },
+]

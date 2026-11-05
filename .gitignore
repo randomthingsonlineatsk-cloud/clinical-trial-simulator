@@ -1,0 +1,8 @@
+node_modules/
+.output/
+dist/
+.nitro/
+.tanstack/
+*.log
+.env*
+*.tsbuildinfo
