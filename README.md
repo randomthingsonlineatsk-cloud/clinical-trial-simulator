@@ -4,7 +4,7 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 
 **Live site:** https://randomthingsonlineatsk-cloud.github.io/clinical-trial-simulator/
 
-**Original version:** the unchanged copy moved from Macaly is kept in this repository's history, in [commit 6c92244](https://github.com/randomthingsonlineatsk-cloud/clinical-trial-simulator/tree/6c92244969d7050277601f5bf807589dcbd93e7f). New features are built on top of it.
+**Original Macaly version:** the unchanged copy moved from Macaly is on the [`macaly-original` branch](https://github.com/randomthingsonlineatsk-cloud/clinical-trial-simulator/tree/macaly-original). This `main` branch is a separate rebuild that keeps all of the original's content and adds the trial application step (US IND, EU CTIS, India CT-04 and more).
 
 > This is a fictional, educational demonstration. Do not use it for real patient data, clinical decisions or regulatory submissions.
 
