@@ -249,8 +249,8 @@ function AuthorityComparisonCard({
 function YesNoToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex gap-2">
-      <Button onClick={() => onChange(true)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${value ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>Yes</Button>
-      <Button onClick={() => onChange(false)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${!value ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>No</Button>
+      <Button onClick={() => onChange(true)} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${value ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>Yes</Button>
+      <Button onClick={() => onChange(false)} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${!value ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>No</Button>
     </div>
   )
 }
@@ -448,7 +448,7 @@ function AssessmentTab() {
             <p className="text-sm text-lab-text mb-1.5">Safety database size so far</p>
             <div className="flex gap-2">
               {(['small', 'moderate', 'large'] as const).map((sz) => (
-                <Button key={sz} onClick={() => set('safetyDatabaseSize', sz)} variant="outline" size="sm" className={`flex-1 border-2 font-mono text-xs capitalize ${inputs.safetyDatabaseSize === sz ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>{sz}</Button>
+                <Button key={sz} onClick={() => set('safetyDatabaseSize', sz)} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono text-xs capitalize ${inputs.safetyDatabaseSize === sz ? 'border-lab-cyan text-lab-cyan bg-lab-cyan-soft' : 'border-lab-line text-lab-text-muted'}`}>{sz}</Button>
               ))}
             </div>
           </div>
@@ -458,8 +458,8 @@ function AssessmentTab() {
       <div>
         <p className="text-xs font-mono text-lab-text-muted mb-1.5">Assess against</p>
         <div className="flex gap-2 mb-2">
-          <Button onClick={() => setCompareAll(false)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${!compareAll ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Single authority</Button>
-          <Button onClick={() => setCompareAll(true)} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${compareAll ? 'border-lab-violet text-lab-violet glow-violet' : 'border-lab-line text-lab-text-muted'}`}>Compare all 21</Button>
+          <Button onClick={() => setCompareAll(false)} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${!compareAll ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Single authority</Button>
+          <Button onClick={() => setCompareAll(true)} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${compareAll ? 'border-lab-violet text-lab-violet glow-violet' : 'border-lab-line text-lab-text-muted'}`}>Compare all 21</Button>
         </div>
         {!compareAll && (
           <div className="flex flex-wrap gap-1.5">
@@ -1040,9 +1040,9 @@ function PlayTab() {
           <p className="text-xs font-mono text-lab-text-muted mb-1.5">Trial application before first patient in</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {([['us', 'US IND'], ['eu', 'EU (CTIS)'], ['in', 'India (CT-04)'], ['more', 'UK, Canada, Australia, Japan, China']] as const).map(([k, l]) => (
-              <Button key={k} aria-pressed={gates[k]} onClick={() => setGates({ ...gates, [k]: !gates[k] })} variant="outline" size="sm" className={`border-2 font-mono ${gates[k] ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>{gates[k] ? '☑ ' : '☐ '}{l}</Button>
+              <Button key={k} aria-pressed={gates[k]} onClick={() => setGates({ ...gates, [k]: !gates[k] })} variant="outline" size="sm" className={`h-auto min-h-8 whitespace-normal py-1.5 text-center border-2 font-mono ${gates[k] ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>{gates[k] ? '☑ ' : '☐ '}{l}</Button>
             ))}
-            <Button onClick={() => setGates({ us: false, eu: false, in: false, more: false })} variant="outline" size="sm" className={`border-2 font-mono ${!indGate && !euGate && !inGate && !moreGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
+            <Button onClick={() => setGates({ us: false, eu: false, in: false, more: false })} variant="outline" size="sm" className={`h-auto min-h-8 whitespace-normal py-1.5 text-center border-2 font-mono ${!indGate && !euGate && !inGate && !moreGate ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Skip (classic game)</Button>
           </div>
           <p className="text-[11px] text-lab-text-muted mt-1">Choose one or more. Each chosen region must authorise the trial before its sites open; the Phase I result shows the start-up timeline side by side.</p>
         </div>
@@ -1051,8 +1051,8 @@ function PlayTab() {
           <div>
             <p className="text-xs font-mono text-lab-text-muted mb-1.5">Difficulty</p>
             <div className="flex gap-2">
-              <Button onClick={() => setDifficulty('guided')} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${difficulty === 'guided' ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Guided (hints visible)</Button>
-              <Button onClick={() => setDifficulty('expert')} variant="outline" size="sm" className={`flex-1 border-2 font-mono ${difficulty === 'expert' ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Expert (hints hidden until chosen)</Button>
+              <Button onClick={() => setDifficulty('guided')} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${difficulty === 'guided' ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Guided (hints visible)</Button>
+              <Button onClick={() => setDifficulty('expert')} variant="outline" size="sm" className={`flex-1 h-auto whitespace-normal py-1.5 border-2 font-mono ${difficulty === 'expert' ? 'border-lab-cyan text-lab-cyan glow-cyan' : 'border-lab-line text-lab-text-muted'}`}>Expert (hints hidden until chosen)</Button>
             </div>
           </div>
         )}
