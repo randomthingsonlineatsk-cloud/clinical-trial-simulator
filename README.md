@@ -2,7 +2,7 @@
 
 This branch holds the original version of the app, as it was built on Macaly Cloud (TanStack Start, React, Tailwind CSS, Convex), moved to GitHub. Design a fictional Phase I to III programme, choose the reviewing authority from 21 regulators, and see the consequences of your choices. It has 13 curated scenarios, Endless Practice, Build Your Own, a regulatory assessment tool, a leaderboard and cross-device sync codes.
 
-The `main` branch is a newer rebuild with extra phases (US IND, EU, India and more). It is a separate codebase, not an upgrade of this one.
+The `main` branch is a newer rebuild with extra phases (US IND, EU, India and more). It is a separate codebase, not an upgrade of this one, and keeps all of this version's content. Its live site is https://randomthingsonlineatsk-cloud.github.io/clinical-trial-simulator/.
 
 > This is a fictional, educational demonstration. Do not use it for real patient data, clinical decisions or regulatory submissions.
 
