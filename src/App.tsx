@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { submitEntry, topEntries } from '@/lib/local-leaderboard'
+import { submitScore as submitScoreEntry, loadLeaderboard, sharedBackend, createSyncCode, pushSync, pullSync } from '@/lib/backend'
+import type { LeaderboardEntry } from '@/lib/local-leaderboard'
 import IndStep, { type IndSummary } from './application/IndStep'
 import IndMissions from './application/IndMissions'
 import EuStep, { StartupTimeline, indRow, type EuSummary } from './application/EuStep'
@@ -531,6 +532,49 @@ function HistoryTab() {
     } catch { setSyncMessage('That file is not a Clinical Trial Simulator history file.') }
   }
 
+  const [codeInput, setCodeInput] = useState('')
+  const [myCode, setMyCode] = useState<string | null>(() => { try { return localStorage.getItem('cts_sync_code') } catch { return null } })
+  const [busy, setBusy] = useState(false)
+  function mergeRuns(incoming: RunEntry[]) {
+    const known = new Set(loadHistory().map((h) => h.ts))
+    const merged = loadHistory().concat(incoming.filter((r) => !known.has(r.ts))).sort((a, b) => a.ts - b.ts)
+    saveHistory(merged); setHistory(merged)
+    return merged.length
+  }
+  async function handleMakeCode() {
+    setBusy(true)
+    try {
+      const code = await createSyncCode()
+      await pushSync(code, JSON.stringify(loadHistory()))
+      try { localStorage.setItem('cts_sync_code', code) } catch { /* ignore */ }
+      setMyCode(code); setSyncMessage(`Your sync code is ${code}. Enter it on another device to load your history there.`)
+    } catch { setSyncMessage('Could not create a sync code. Check your connection and try again.') }
+    setBusy(false)
+  }
+  async function handleSaveToCode() {
+    if (!myCode) return
+    setBusy(true)
+    try { await pushSync(myCode, JSON.stringify(loadHistory())); setSyncMessage(`Saved ${loadHistory().length} runs to ${myCode}.`) } catch { setSyncMessage('Could not save. Check your connection and try again.') }
+    setBusy(false)
+  }
+  async function handleLoadFromCode() {
+    const code = codeInput.trim().toUpperCase()
+    if (!code) return
+    setBusy(true)
+    try {
+      const json = await pullSync(code)
+      if (json === null) setSyncMessage('That sync code was not found.')
+      else {
+        const runs = JSON.parse(json)
+        if (!Array.isArray(runs)) throw new Error('bad data')
+        const total = mergeRuns(runs as RunEntry[])
+        try { localStorage.setItem('cts_sync_code', code) } catch { /* ignore */ }
+        setMyCode(code); setSyncMessage(`Loaded. You now have ${total} runs on this device.`)
+      }
+    } catch { setSyncMessage('Could not read data from that code.') }
+    setBusy(false)
+  }
+
   const badges = computeBadges(history)
   const approvals = history.filter((h) => h.verdict === 'approvable' || h.verdict === 'provisional').length
 
@@ -558,7 +602,25 @@ function HistoryTab() {
       <Card className="bg-lab-panel/80 border-lab-line">
         <CardHeader className="pb-2"><CardTitle className="font-mono text-sm text-lab-text-muted">Sync across devices</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-xs text-lab-text-muted">No account needed: download your history here and load the file on another device.</p>
+          <p className="text-xs text-lab-text-muted">{sharedBackend ? "No account needed: a short code links this device's history to any other device. You can also use a history file." : 'No account needed: download your history here and load the file on another device.'}</p>
+          {sharedBackend && (
+            <div className="space-y-2">
+              <div className="flex gap-2 flex-wrap items-center">
+                {myCode ? (
+                  <>
+                    <span className="font-mono text-sm text-lab-cyan">Code: {myCode}</span>
+                    <Button onClick={handleSaveToCode} disabled={busy} size="sm" variant="outline" className="border-2 border-lab-line font-mono">Save history to code</Button>
+                  </>
+                ) : (
+                  <Button onClick={handleMakeCode} disabled={busy} size="sm" variant="outline" className="border-2 border-lab-line font-mono">Create a sync code</Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Input value={codeInput} onChange={(e) => setCodeInput(e.target.value)} placeholder="Enter a sync code" maxLength={8} className="bg-lab-panel-strong border-lab-line text-lab-text font-mono uppercase" />
+                <Button onClick={handleLoadFromCode} disabled={busy || !codeInput.trim()} size="sm" className="bg-lab-cyan text-lab-bg hover:bg-lab-cyan/90 font-mono">Load</Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2 flex-wrap">
             <Button onClick={handleExport} size="sm" className="bg-lab-cyan text-lab-bg hover:bg-lab-cyan/90 font-mono">Download history file</Button>
             <label className="inline-flex items-center rounded-md border-2 border-lab-line px-3 h-8 text-sm font-mono cursor-pointer hover:border-lab-text-muted">Load history file
@@ -579,14 +641,21 @@ function HistoryTab() {
 function LeaderboardTab() {
   const [filterScenario, setFilterScenario] = useState<string | 'all'>('all')
   const [filterAuthority, setFilterAuthority] = useState<string | 'all'>('all')
-  const entries = topEntries({
-    scenarioId: filterScenario !== 'all' ? filterScenario : undefined,
-    authorityKey: filterAuthority !== 'all' ? filterAuthority : undefined,
-  })
+  const [entries, setEntries] = useState<LeaderboardEntry[] | undefined>(undefined)
+  const [shared, setShared] = useState(false)
+  useEffect(() => {
+    let live = true
+    setEntries(undefined)
+    loadLeaderboard({
+      scenarioId: filterScenario !== 'all' ? filterScenario : undefined,
+      authorityKey: filterAuthority !== 'all' ? filterAuthority : undefined,
+    }).then((r) => { if (live) { setEntries(r.entries); setShared(r.shared) } })
+    return () => { live = false }
+  }, [filterScenario, filterAuthority])
 
   return (
     <div className="space-y-4">
-      <p className="text-xs font-mono text-lab-text-muted">Scores submitted on this device. A shared class leaderboard comes with classroom mode.</p>
+      <p className="text-xs font-mono text-lab-text-muted">{sharedBackend && shared ? 'Shared leaderboard: scores from everyone who plays.' : 'Scores submitted on this device.'}</p>
       <div className="flex flex-wrap gap-1.5">
         <Button onClick={() => setFilterScenario('all')} variant="outline" size="sm" className={`border-2 font-mono text-[11px] ${filterScenario === 'all' ? 'border-lab-cyan text-lab-cyan' : 'border-lab-line text-lab-text-muted'}`}>All programs</Button>
         {SCENARIOS.map((s) => (
@@ -821,7 +890,7 @@ function PlayTab() {
     return saved && saved.step !== 'select' ? saved : null
   })
 
-  const submitScore = async (e: Parameters<typeof submitEntry>[0]) => submitEntry(e)
+  const submitScore = async (e: Parameters<typeof submitScoreEntry>[0]) => submitScoreEntry(e)
   const flows = useMemo(() => [p1?.flow, p2?.flow, p3?.flow].filter(Boolean) as PhaseOutcome['flow'][], [p1, p2, p3])
 
   // Persist the in-progress run so it can be resumed after closing the tab.
@@ -1372,7 +1441,7 @@ function PlayTab() {
         <Card className="bg-lab-panel/80 border-lab-line">
           <CardHeader className="pb-2"><CardTitle className="font-mono text-sm text-lab-text-muted flex items-center gap-2"><Trophy className="size-4 text-lab-gold" />Submit to leaderboard</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {scoreSubmitted ? <p className="text-sm text-lab-emerald">Recorded on this device. Check the Leaderboard tab.</p> : (
+            {scoreSubmitted ? <p className="text-sm text-lab-emerald">{sharedBackend ? 'Recorded on the shared leaderboard. Check the Leaderboard tab.' : 'Recorded on this device. Check the Leaderboard tab.'}</p> : (
               <div className="flex gap-2">
                 <Input value={playerName} onChange={(e) => setPlayerName(e.target.value)} placeholder="Your name" maxLength={32} className="bg-lab-panel-strong border-lab-line text-lab-text" />
                 <Button onClick={handleSubmitScore} disabled={!playerName.trim() || !canSubmitScore} className="bg-lab-cyan text-lab-bg hover:bg-lab-cyan/90 font-mono">Submit</Button>
