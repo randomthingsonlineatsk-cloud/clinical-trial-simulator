@@ -70,6 +70,8 @@ npm run dev
 `npm run build` writes the static site to `dist/`.
 
 ## Shared backend (optional)
+The live GitHub Pages site uses the shared backend at `https://grand-robin-47.convex.cloud` for the leaderboard and sync codes.
+
 The app works on its own, with scores and history kept in the browser. To add a shared leaderboard and short sync codes that move run history between devices, deploy the Convex backend in the `convex/` folder:
 ```
 npm install
