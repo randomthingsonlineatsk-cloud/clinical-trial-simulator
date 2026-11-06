@@ -69,6 +69,15 @@ npm run dev
 ```
 `npm run build` writes the static site to `dist/`.
 
+## Shared backend (optional)
+The app works on its own, with scores and history kept in the browser. To add a shared leaderboard and short sync codes that move run history between devices, deploy the Convex backend in the `convex/` folder:
+```
+npm install
+npx convex dev --configure new
+npx convex deploy
+```
+`convex deploy` prints a `.convex.cloud` address. Set it as the build variable `VITE_CONVEX_URL` (in Cloudflare Workers Builds, or in a `.env.local` file when building locally), then rebuild. If the backend cannot be reached, the app falls back to this device's own scores.
+
 ## Tech stack
 React, TypeScript, Vite and Tailwind CSS. The simulation engine is in `src/data/ct-*.ts`; the application step is in `src/application/`.
 
