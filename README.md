@@ -2,7 +2,9 @@
 
 Design a fictional Phase I to III programme, choose the reviewing authority, and see the consequences of your choices.
 
-**Live site:** https://randomthingsonlineatsk-cloud.github.io/clinical-trial-simulator/
+**Live sites:**
+- Cloudflare: https://clinical-trial-simulator.randomthingsonlineatsk.workers.dev
+- GitHub Pages: https://randomthingsonlineatsk-cloud.github.io/clinical-trial-simulator/
 
 **Original Macaly version:** the unchanged copy moved from Macaly is on the [`macaly-original` branch](https://github.com/randomthingsonlineatsk-cloud/clinical-trial-simulator/tree/macaly-original). This `main` branch is a separate rebuild that keeps all of the original's content and adds the trial application step (US IND, EU CTIS, India CT-04 and more).
 
@@ -68,6 +70,12 @@ npm test
 npm run dev
 ```
 `npm run build` writes the static site to `dist/`.
+
+## Deploy (Cloudflare Workers)
+- Production branch: `main`
+- Build command: `npm install && npm run build`
+- Deploy command: `npx wrangler deploy --assets dist --name clinical-trial-simulator --compatibility-date 2026-01-01`
+- Build variable `VITE_CONVEX_URL` for the shared leaderboard and sync codes (see below)
 
 ## Shared backend (optional)
 The live GitHub Pages site uses the shared backend at `https://grand-robin-47.convex.cloud` for the leaderboard and sync codes.
