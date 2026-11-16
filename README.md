@@ -22,6 +22,8 @@ Design a fictional Phase I to III programme, choose the reviewing authority, and
 - A simulated FDA review over the 30-day wait (312.40(b)): information requests, or a clinical hold on the grounds of 312.42(b)(1). Answer the hold with a complete response; FDA replies within 30 days. The timeline shows the day the study may proceed and the first patient in.
 - Reviewer questions are plain "simulated" cards, not agency letters.
 - Download the IND as an eCTD package and import it in the [eCTD Dossier Builder](https://randomthingsonlineatsk-cloud.github.io/ectd-dossier-builder/) (Sequences tab), which places each document in its US Module 1, 2 or 5 node.
+- **Submit a protocol** (tab): open the application bundle exported from the [Protocol Builder](https://randomthingsonlineatsk-cloud.github.io/protocol-builder/) and see, for the US (IND, 21 CFR 312.23 and 312.30), the EU (CTIS, Annex I) and India (CDSCO, NDCT Rules), the submission route, where each part goes, what still stops it (draft status, consistency findings, cross-walk gaps) and, for an amendment, the cover note. The US route downloads an IND amendment package for the eCTD Dossier Builder.
+- **Design for the Protocol Builder** (final report): exports the phase 2 and phase 3 choices; the Protocol Builder opens the file as the first draft of a protocol.
 - Four US IND missions: open an IND without a hold, clear a hold in one cycle, IND or exempt (312.2(b)), and file the IND in eCTD.
 - The setup screen chooses the applications before Phase I: US IND, EU (CTIS), both, or none (the classic game).
 
