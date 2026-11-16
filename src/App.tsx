@@ -3,6 +3,9 @@ import { submitScore as submitScoreEntry, loadLeaderboard, sharedBackend, create
 import type { LeaderboardEntry } from '@/lib/local-leaderboard'
 import IndStep, { type IndSummary } from './application/IndStep'
 import IndMissions from './application/IndMissions'
+import ProtocolSubmission from './application/ProtocolSubmission'
+import { designFile } from './application/protocolLink'
+import { userId as ctsUserId, classId as ctsClassId } from './application/store'
 import EuStep, { StartupTimeline, indRow, type EuSummary } from './application/EuStep'
 import IndiaStep, { type IndiaSummary } from './application/IndiaStep'
 import RegionsStep, { type RegionsResult } from './application/RegionsStep'
@@ -32,7 +35,7 @@ import type { Choices, FinalReport, Grade, PhaseOutcome, Scenario } from './data
 import { GLOSSARY, RMP_NOTE, REMS_NOTE, PHASE_IV_EVENTS, type PhaseIvEvent } from './data/ct-reference'
 import {
   Activity, FlaskConical, Syringe, ShieldCheck, ShieldAlert, CheckCircle2, CircleAlert, CircleSlash,
-  Trophy, RotateCcw, ArrowRight, ArrowLeft, Microscope, Dna, Globe2, BookOpen, History as HistoryIcon, Users, X, Download, Sparkles, ClipboardCheck,
+  Trophy, RotateCcw, ArrowRight, ArrowLeft, Microscope, Dna, Globe2, BookOpen, History as HistoryIcon, Users, X, Download, Sparkles, ClipboardCheck, FileText as FileTextIcon,
 } from 'lucide-react'
 
 
@@ -1452,6 +1455,7 @@ function PlayTab() {
 
         <div className="flex gap-2">
           <Button onClick={downloadReport} variant="outline" className="flex-1 border-2 border-lab-line font-mono">⬇ Download report</Button>
+          <Button onClick={() => { const f = designFile(scenario, choices, { userId: ctsUserId(), classId: ctsClassId() }); const url = URL.createObjectURL(new Blob([JSON.stringify(f, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `${scenario.code.toLowerCase()}-design-for-protocol-builder.json`; a.click(); URL.revokeObjectURL(url) }} variant="outline" className="flex-1 border-2 border-lab-line font-mono" title="Open it in the Protocol Builder (Start from a Clinical Trial Simulator design) to draft the protocol">⬇ Design for the Protocol Builder</Button>
           <Button onClick={startNewProgram} className="flex-1 bg-lab-violet text-lab-bg hover:bg-lab-violet/90 font-mono gap-1.5"><RotateCcw className="size-4" />New program</Button>
         </div>
       </div>
@@ -1465,7 +1469,7 @@ function PlayTab() {
 // App
 // ---------------------------------------------------------------------------
 
-type Tab = 'play' | 'ind' | 'assessment' | 'glossary' | 'leaderboard' | 'history'
+type Tab = 'play' | 'ind' | 'protocol' | 'assessment' | 'glossary' | 'leaderboard' | 'history'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('play')
@@ -1488,6 +1492,7 @@ export default function App() {
         <div className="flex flex-wrap gap-2">
           <TabButton active={tab === 'play'} onClick={() => setTab('play')} icon={FlaskConical}>Play</TabButton>
           <TabButton active={tab === 'ind'} onClick={() => setTab('ind')} icon={ShieldCheck}>Application missions</TabButton>
+          <TabButton active={tab === 'protocol'} onClick={() => setTab('protocol')} icon={FileTextIcon}>Submit a protocol</TabButton>
           <TabButton active={tab === 'assessment'} onClick={() => setTab('assessment')} icon={ClipboardCheck}>Assessment</TabButton>
           <TabButton active={tab === 'glossary'} onClick={() => setTab('glossary')} icon={BookOpen}>Glossary</TabButton>
           <TabButton active={tab === 'leaderboard'} onClick={() => setTab('leaderboard')} icon={Trophy}>Leaderboard</TabButton>
@@ -1496,6 +1501,7 @@ export default function App() {
 
         {tab === 'play' && <PlayTab />}
         {tab === 'ind' && <IndMissions />}
+        {tab === 'protocol' && <ProtocolSubmission />}
         {tab === 'assessment' && <AssessmentTab />}
         {tab === 'glossary' && <GlossaryTab />}
         {tab === 'leaderboard' && <LeaderboardTab />}
